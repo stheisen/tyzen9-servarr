@@ -19,13 +19,13 @@ Usage: cleanVideo.sh -f sourceFilePath [ -t \"Title\" ] [ -y #### ]
 processMKV()
 {
 	#echo "ffmpeg -i $sourceFilePath -metadata title="$videoTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilePath""
-  	ffmpeg -i $sourceFilePath -metadata title="$videoTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilePath" -loglevel fatal
+  	ffmpeg -i "$sourceFilePath" -metadata title="$videoTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilePath" -loglevel fatal
 }
 
 processMP4()
 {
 	#echo "exiftool -all= -title="$videoTitle" -comment="$date" $sourceFilePath -o "$outputFilePath""
-	exiftool -all= -title="$videoTitle" -comment="$date" $sourceFilePath -o "$outputFilePath"
+	exiftool -all= -title="$videoTitle" -comment="$date" "$sourceFilePath" -o "$outputFilePath"
 }
 
 # $sourceFilePath $outputFilePath $finalFilePath
@@ -105,12 +105,13 @@ then
 			processMP4;
 			if [ $? -eq 0 ]; then successfulProcessing=true; fi
 		else
-			echo -e "ERROR - Unknown file extension: [ $sourceExtension ], \e[1;33mskipping $sourceFilePath\e[1;m"
+			echo -e "ERROR - Unknown file extension: [ $sourceExtension ], \e[1;33mskipping $sourceFilePath\e[1;m";
+			successfulProcessing=true;
 		fi
 	
 		if $successfulProcessing 
 		then
-		  fileCleanup $sourceFilePath $outputFilePath $finalFilePath
+		  fileCleanup "$sourceFilePath" "$outputFilePath" "$finalFilePath"
 		else
 		  echo -e "\e[1;31m** PROCESSING FAILED **\e[1;m"
 		fi
@@ -162,7 +163,7 @@ else
 
 	if $successfulProcessing 
 	then
-		fileCleanup $sourceFilePath $outputFilePath $finalFilePath
+		fileCleanup "$sourceFilePath" "$outputFilePath" "$finalFilePath"
 	else
 		echo -e "\e[1;31m** PROCESSING FAILED **\e[1;m"
 	fi
