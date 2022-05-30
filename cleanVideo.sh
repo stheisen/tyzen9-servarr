@@ -11,21 +11,31 @@ help()
 {
     echo "
 Usage: cleanVideo.sh -d directoryName
-Usage: cleanVideo.sh -s sourceFile [ -t \"Title\" ] [ -y #### ]
+Usage: cleanVideo.sh -f sourceFilePath [ -t \"Title\" ] [ -y #### ]
 "
     exit 2
 }
 
 processMKV()
 {
-	echo "ffmpeg -i $sourceFile -metadata title="$movieTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilename""
-  ffmpeg -i $sourceFile -metadata title="$movieTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilename" -loglevel fatal
+	#echo "ffmpeg -i $sourceFilePath -metadata title="$videoTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilePath""
+  	ffmpeg -i $sourceFilePath -metadata title="$videoTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilePath" -loglevel fatal
 }
 
 processMP4()
 {
-	echo "exiftool -all= -title="$movieTitle" -comment="$date" $sourceFile -o "$outputFilename""
-	exiftool -all= -title="$movieTitle" -comment="$date" $sourceFile -o "$outputFilename"
+	#echo "exiftool -all= -title="$videoTitle" -comment="$date" $sourceFilePath -o "$outputFilePath""
+	exiftool -all= -title="$videoTitle" -comment="$date" $sourceFilePath -o "$outputFilePath"
+}
+
+# $sourceFilePath $outputFilePath $finalFilePath
+fileCleanup()
+{
+	sourcePath=$1
+	outputFilePath=$2
+	finalFilePath=$3
+	rm "$sourceFilePath"
+	mv "$outputFilePath" "$finalFilePath"
 }
 
 VALID_ARGUMENTS=$# # Returns the count of arguments
@@ -35,20 +45,20 @@ fi
 
 directoryMode=false;
 
-while getopts "d:s:t:y:" opt; do
+while getopts "d:f:t:y:" opt; do
   case $opt in
      d)
      	 directoryPath=$OPTARG
      	 directoryMode=true;
        ;;
-     s)
-       sourceFile=$OPTARG
+     f)
+       sourceFilePath=$OPTARG
        ;;
      t)
-       movieTitle=$OPTARG
+       videoTitle=$OPTARG
        ;;
      y)
-       movieYear=$OPTARG
+       videoYear=$OPTARG
        ;;
      *)
        echo "invalid command: no parameter included with argument $OPTARG"
@@ -66,95 +76,95 @@ fi
 date=$(date '+%Y.%m.%d');
 
 
-
+# In directory mode, all files are scrubbed resulting in NO title in the MetaData
 if $directoryMode
 then
-	echo "DirectoryMode"
+	echo -e "Processing videos in the directory: \e[1;32m$directoryPath\e[1;m"
 	
 	for entry in "$directoryPath"/*
 	do
-		sourceFile=$entry;
-		sourceExtension=${sourceFile: -4}
-		sourceFileNoExt="${sourceFile%.*}";
-		outputFilename="$sourceFileNoExt-CLEANING$sourceExtension";
-		cleanedFilename="$sourceFileNoExt$sourceExtension";
+		echo "-----------------------------------------------------------------";
+		sourceFilePath=$entry;
+		sourceFileName=${sourceFilePath##*/}
+		sourceExtension=${sourceFilePath: -4}
+		sourceFilePathNoExt="${sourceFilePath%.*}";
+		outputFilePath="$sourceFilePathNoExt-CLEANING$sourceExtension";
+		finalFilePath="$sourceFilePathNoExt$sourceExtension";
 
-		movieTitle="";
+		videoTitle="";
+		successfulProcessing=false;
 
-
-		if [ "${sourceFile: -4}" == ".mkv" ]
+		if [ "${sourceFilePath: -4}" == ".mkv" ]
 		then
-			echo "Processing an MKV file"
+			echo "Processing MKV file: $sourceFileName"
 			processMKV;
-		elif [ "${sourceFile: -4}" == ".mp4" ]
+			if [ $? -eq 0 ]; then successfulProcessing=true; fi
+		elif [ "${sourceFilePath: -4}" == ".mp4" ]
 		then
-			echo "Processing an MP4 file"
+			echo "Processing MP4 file: $sourceFileName"
 			processMP4;
+			if [ $? -eq 0 ]; then successfulProcessing=true; fi
 		else
-			echo -e "ERROR - Unknown file extension: [ $sourceExtension ], \e[1;33mskipping $sourceFile\e[1;m"
+			echo -e "ERROR - Unknown file extension: [ $sourceExtension ], \e[1;33mskipping $sourceFilePath\e[1;m"
 		fi
 	
-		if [ $? -eq 0 ]; then
-		  echo Processing complete...
-		  rm $sourceFile
-		  mv $outputFilename $cleanedFilename
+		if $successfulProcessing 
+		then
+		  fileCleanup $sourceFilePath $outputFilePath $finalFilePath
 		else
 		  echo -e "\e[1;31m** PROCESSING FAILED **\e[1;m"
 		fi
-
-	
-  	#echo "$entry"
 	done
 
-	
+# In file mode, only on file is processed using the command line arguments to construct metadata included
 else
+	echo -e "Processing one file: \e[1;32m$sourceFilePath\e[1;m"
 
-  echo "FileMode"
-	echo "source filename: $sourceFile";
-	sourceExtension=${sourceFile: -4}
+	sourceExtension=${sourceFilePath: -4}
+	sourceFileName=${sourceFilePath##*/}
+	successfulProcessing=false;
 
 	# Determine if a title and year was provided
-	if [[ ! -z $movieTitle && ! -z $movieYear ]]
+	if [[ ! -z $videoTitle && ! -z $videoYear ]]
 	then
-		echo "Video title: $movieTitle";
-		echo "Video Year: $movieYear";
-		targetFileName="$movieTitle ($movieYear)";
+		echo "Video title: $videoTitle";
+		echo "Video Year: $videoYear";
+		targetFileName="$videoTitle ($videoYear)";
 	# Was only a title provided?
-	elif [[ ! -z $movieTitle && -z $movieYear ]]
+	elif [[ ! -z $videoTitle && -z $videoYear ]]
 	then
-		echo "Video title: $movieTitle";
-		echo "No year was provided";
-		targetFileName="$movieTitle";
+		echo -e "Video title: \e[1;32m$videoTitle \e[1;33m(No year was provided)\e[1;m";
+		targetFileName="$videoTitle";
 	# No Title was provided
 	else
 		echo -e "\e[1;33m** Title was NOT provided - The metadata title will be BLANK **\e[1;m";
-		sourceFileNoExt="${sourceFile%.*}";
-		movieTitle="";
-		targetFileName="$sourceFileNoExt";
+		sourceFilePathNoExt="${sourceFilePath%.*}";
+		videoTitle="";
+		targetFileName="$sourceFilePathNoExt";
 	fi
 
-	outputFilename="$targetFileName-CLEANING$sourceExtension";
-	cleanedFilename="$targetFileName$sourceExtension";
-	echo "Output file name: $cleanedFilename";
+	outputFilePath="$targetFileName-CLEANING$sourceExtension";
+	finalFilePath="$sourceFilePathNoExt$sourceExtension";
 
-	if [ "${sourceFile: -4}" == ".mkv" ]
+	if [ "${sourceFilePath: -4}" == ".mkv" ]
 	then
-		echo "Processing an MKV file"
+		echo "Processing MKV file: $sourceFileName"
 		processMKV;
-	elif [ "${sourceFile: -4}" == ".mp4" ]
+		if [ $? -eq 0 ]; then successfulProcessing=true; fi
+	elif [ "${sourceFilePath: -4}" == ".mp4" ]
 	then
-		echo "Processing an MP4 file"
+		echo "Processing an MP4 file $sourceFileName"
 		processMP4;
+		if [ $? -eq 0 ]; then successfulProcessing=true; fi
 	else
 		echo "ERROR - Unknown file extension: [ $sourceExtension ]"
 	fi
 
-	if [ $? -eq 0 ]; then
-		 echo Processing complete...
-		 rm $sourceFile
-		 mv $outputFilename $cleanedFilename
+	if $successfulProcessing 
+	then
+		fileCleanup $sourceFilePath $outputFilePath $finalFilePath
 	else
-		 echo -e "\e[1;31m** PROCESSING FAILED **\e[1;m"
+		echo -e "\e[1;31m** PROCESSING FAILED **\e[1;m"
 	fi
 
 fi
