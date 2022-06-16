@@ -20,6 +20,7 @@ processMKV()
 {
 	#echo "ffmpeg -i $sourceFilePath -metadata title="$videoTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilePath""
   	ffmpeg -i "$sourceFilePath" -metadata title="$videoTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilePath" -loglevel fatal
+	#ffmpeg -i "$sourceFilePath" -metadata title="$videoTitle" -metadata comment="$date" -map 0 -map_metadata -1 -c copy "$outputFilePath" 
 }
 
 processMP4()
@@ -35,8 +36,8 @@ fileCleanup()
 	outputFilePath=$2
 	finalFilePath=$3
 	echo Cleaning up....
-	echo rm "$sourceFilePath"
-	echo mv "$outputFilePath" "$finalFilePath"
+	rm "$sourceFilePath"
+	mv "$outputFilePath" "$finalFilePath"
 }
 
 VALID_ARGUMENTS=$# # Returns the count of arguments
@@ -146,7 +147,7 @@ else
 	fi
 
 	outputFilePath="$targetFileName-CLEANING$sourceExtension";
-	finalFilePath="$sourceFilePathNoExt$sourceExtension";
+	finalFilePath="$targetFileName$sourceExtension";
 
 	if [ "${sourceFilePath: -4}" == ".mkv" ]
 	then
