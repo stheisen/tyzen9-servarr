@@ -34,8 +34,9 @@ fileCleanup()
 	sourcePath=$1
 	outputFilePath=$2
 	finalFilePath=$3
-	rm "$sourceFilePath"
-	mv "$outputFilePath" "$finalFilePath"
+	echo Cleaning up....
+	echo rm "$sourceFilePath"
+	echo mv "$outputFilePath" "$finalFilePath"
 }
 
 VALID_ARGUMENTS=$# # Returns the count of arguments
@@ -124,6 +125,7 @@ else
 	sourceExtension=${sourceFilePath: -4}
 	sourceFileName=${sourceFilePath##*/}
 	successfulProcessing=false;
+	sourceFilePathNoExt="${sourceFilePath%.*}";
 
 	# Determine if a title and year was provided
 	if [[ ! -z $videoTitle && ! -z $videoYear ]]
@@ -134,12 +136,11 @@ else
 	# Was only a title provided?
 	elif [[ ! -z $videoTitle && -z $videoYear ]]
 	then
-		echo -e "Video title: \e[1;32m$videoTitle \e[1;33m(No year was provided)\e[1;m";
+		echo -e "Video Title: \e[1;32m$videoTitle \e[1;33m(No year was provided)\e[1;m";
 		targetFileName="$videoTitle";
 	# No Title was provided
 	else
 		echo -e "\e[1;33m** Title was NOT provided - The metadata title will be BLANK **\e[1;m";
-		sourceFilePathNoExt="${sourceFilePath%.*}";
 		videoTitle="";
 		targetFileName="$sourceFilePathNoExt";
 	fi
