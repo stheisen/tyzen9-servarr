@@ -2,5 +2,5 @@
 /pia/pia_registerPort.sh
 
 # Ignore config files
-/pia/pia.config
-/pia/pia_registerPort.sh
+#/pia/pia.config
+#/pia/pia_registerPort.sh
