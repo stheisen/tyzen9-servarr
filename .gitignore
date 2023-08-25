@@ -1,5 +1,5 @@
 # Ignore config files
-pia/pia.config
+**/pia.config
 
 # Ignore dynamically created files
-pia/pia_registerPort.sh
+**/pia_registerPort.sh
