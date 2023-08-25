@@ -2,4 +2,4 @@
 /pia/pia.config
 
 # Ignore dynamically created files
-#/pia/pia_registerPort.sh
+/pia/pia_registerPort.sh
