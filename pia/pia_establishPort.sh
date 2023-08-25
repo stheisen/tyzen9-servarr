@@ -26,6 +26,12 @@ fi
 # $PIA_PASSWORD
 source $CONFIG_FILE_PATH
 
+# Make sure a PIA username and password was pulled from the config file
+if [ ${#PIA_USERNAME} -eq 0 ] || [ ${#PIA_PASSWORD} -eq 0 ]; then
+  echo "A PIA Username and Password is needed in the configuration file \"$CONFIG_FILE_PATH\""
+  exit 1
+fi
+
 # This function allows you to check if the required tools have been installed.
 check_tool() {
   cmd=$1
@@ -68,10 +74,7 @@ SIGNATURE=$(echo $SIGNATURE_OBJ | jq -r '.signature')
 PAYLOAD_OBJ=$(echo $PAYLOAD | base64 -d | jq)
 PORT=$(echo $PAYLOAD_OBJ | jq -r '.port')
 #echo Payload Object: $PAYLOAD_OBJ
-# echo Port: $PORT
-
 echo Port: $PORT
-exit 0
 
 # Using the data we have gathered thus far, we need to register this port number via PIA so 
 # that is can be "registered".  This will be run immediatly after creation
@@ -86,3 +89,6 @@ curl -sGk --data-urlencode \
  "signature=${SIGNATURE}" \
  https://${GATEWAY_IP}:19999/bindPort
 EOL
+
+echo Now run the script.... 
+exit 0
