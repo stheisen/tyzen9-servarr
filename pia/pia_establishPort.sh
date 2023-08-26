@@ -2,6 +2,13 @@
 # *****************************************************************************
 # pia_establishPort.sh
 #
+# OUTPUT: pia_registerPort.sh
+#   This script (pia_registerPort.sh) will be created/overriten and executed each time this script is run.
+#   ** NOTE: A Cron Jobs need setup to:
+#             1. run pia_establishPort.sh every the first day of every month
+#             2. run pia_establishPort.sh every reboot
+#             3. run pia_registerPort.sh every 15 minutes
+#
 # Author: Steve Theisen (Tyzen9)
 # License: GNU GENERAL PUBLIC LICENSE
 #
@@ -74,7 +81,14 @@ SIGNATURE=$(echo $SIGNATURE_OBJ | jq -r '.signature')
 PAYLOAD_OBJ=$(echo $PAYLOAD | base64 -d | jq)
 PORT=$(echo $PAYLOAD_OBJ | jq -r '.port')
 #echo Payload Object: $PAYLOAD_OBJ
-echo Port: $PORT
+#echo Port: $PORT
+
+# Write the port number to a local file for traceability 
+cat > ./_forwardPort.no <<EOL
+$PORT
+EOL
+
+$(mosquitto_pub -r -h $MQTT_BROKER -u $MQTT_USERNAME -P $MQTT_PASSWORD -t "homeassistant/sensor/blackpearl-pia-port/state" -m "$PORT")
 
 # Using the data we have gathered thus far, we need to register this port number via PIA so 
 # that is can be "registered".  This will be run immediatly after creation
@@ -90,5 +104,6 @@ curl -sGk --data-urlencode \
  https://${GATEWAY_IP}:19999/bindPort
 EOL
 
-echo Now run the script.... 
+./pia_registerPort.sh
+
 exit 0

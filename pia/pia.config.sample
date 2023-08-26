@@ -1,0 +1,10 @@
+# Provide PIA credentials
+PIA_USERNAME=""
+PIA_PASSWORD=""
+
+# Provide MQTT broker credentials
+MQTT_USERNAME=""
+MQTT_PASSWORD=""
+
+# Provide MQTT host name
+MQTT_BROKER=""
