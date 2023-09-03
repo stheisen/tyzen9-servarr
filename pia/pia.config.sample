@@ -8,3 +8,6 @@ MQTT_PASSWORD=""
 
 # Provide MQTT host name
 MQTT_BROKER=""
+
+# Provide MQTT topic
+MQTT_TOPIC=""

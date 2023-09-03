@@ -88,7 +88,10 @@ cat > ./_forwardPort.no <<EOL
 $PORT
 EOL
 
-$(mosquitto_pub -r -h $MQTT_BROKER -u $MQTT_USERNAME -P $MQTT_PASSWORD -t "homeassistant/sensor/blackpearl-pia-port/state" -m "$PORT")
+# Publish the new port number to MQTT
+# - Configuration is done in pia.config
+# - Simply comment out the following line if you are not using MQTT
+$(mosquitto_pub -r -h $MQTT_BROKER -u $MQTT_USERNAME -P $MQTT_PASSWORD -t "$MQTT_TOPIC" -m "$PORT")
 
 # Using the data we have gathered thus far, we need to register this port number via PIA so 
 # that is can be "registered".  This will be run immediatly after creation
@@ -104,6 +107,8 @@ curl -sGk --data-urlencode \
  https://${GATEWAY_IP}:19999/bindPort
 EOL
 
+# Execute the newly created script
+# REMEMBER to setup a cron job that will run this script every 15 minutes to keep the port alive.
 ./pia_registerPort.sh
 
 exit 0

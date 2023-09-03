@@ -3,3 +3,4 @@ pia.config
 
 # Ignore dynamically created files
 pia_registerPort.sh
+_forwardPort.no
