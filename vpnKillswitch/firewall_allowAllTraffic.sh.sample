@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Reset all firewall rules
+sudo ufw reset
+
+# Allow all incoming and outgoing traffic
+sudo ufw default allow incoming
+sudo ufw default allow outgoing
+
+# Explicity allow SSH
+sudo ufw allow ssh
+
+# Enable these firewall rules
+sudo ufw enable

@@ -1,0 +1,25 @@
+#!/bin/bash
+
+sudo ufw --force reset
+
+# Deny all trafic to start
+sudo ufw default deny incoming
+sudo ufw default deny outgoing
+
+# Allow internal (LAN) traffic
+sudo ufw allow out to [LAN NETMASK - i.e. 192.168.1.0/24]
+sudo ufw allow in to [LAN NETMASK - i.e. 192.168.1.0/24]
+
+# Explicity allow SSH
+sudo ufw allow ssh
+
+# This needs to be the IP address of the configured VPN
+# See configuration in /etc/openvpn
+# sudo ufw allow out to xxx.xxx.xxx.xxx port xxx proto udp
+sudo ufw allow out to [VPN_IP_ADDDRESS] port [OPENVPN PORT - i.e. 1198] proto udp
+
+# Allow traffic on the VPN tunnel interface
+sudo ufw allow out on tun0 from any to any
+sudo ufw allow in on tun0 from any to any
+
+sudo ufw --force enable
