@@ -84,7 +84,7 @@ PORT=$(echo $PAYLOAD_OBJ | jq -r '.port')
 #echo Port: $PORT
 
 # Write the port number to a local file for traceability 
-cat > ./_forwardPort.no <<EOL
+cat > ./_forwardPort.log <<EOL
 $PORT
 EOL
 
@@ -100,12 +100,20 @@ $(mosquitto_pub -r -h $MQTT_BROKER -u $MQTT_USERNAME -P $MQTT_PASSWORD -t "$MQTT
 cat >./pia_registerPort.sh <<EOL
 #!/bin/bash
 
+# Make a call to bind this port number every 15 mins
 curl -sGk --data-urlencode \
  "payload=${PAYLOAD}" \
  --data-urlencode \
  "signature=${SIGNATURE}" \
  https://${GATEWAY_IP}:19999/bindPort
+
+# Write the time this was last done to a file
+date > _lastbind.log
+
 EOL
+
+# Make the dynamic file executable
+chmod 755 ./pia_registerPort.sh
 
 # Execute the newly created script
 # REMEMBER to setup a cron job that will run this script every 15 minutes to keep the port alive.
