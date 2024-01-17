@@ -1,9 +1,13 @@
 #!/bin/bash
 # *****************************************************************************
 # pia_establishPort.sh
+#   This script will make an MQTT to send the new Port Forward number to Home Assistant
+#   This script also reads the configured OPENVPN_CONFIG_PATH to gain the IP Address of the VPN Tunnel
+#   It also uses UFW commands to remove old rules and add a new rule for the new port-forwrad number
 #
 # OUTPUT: pia_registerPort.sh
-#   This script (pia_registerPort.sh) will be created/overriten and executed each time this script is run.
+#   The script (pia_registerPort.sh) will be created/overriten and executed each time this script is run
+#
 #   ** NOTE: A Cron Jobs need setup to:
 #             1. run pia_establishPort.sh every the first day of every month
 #             2. run pia_establishPort.sh every reboot
@@ -14,6 +18,7 @@
 #
 # Prerequisites: 
 #    An openVPN connection should exist to a PIA server that supports PORT Forwarding
+#    /etc/sodoers is configured so the user the script runs as does not need to enter a password for sudo commands
 #
 # Reference: https://github.com/pia-foss/manual-connections
 #
@@ -21,6 +26,8 @@
 
 # Set the path to the required configuration file
 CONFIG_FILE_PATH="./pia.config"
+PORT_HISTORY_PATH="./pia.port_history" 
+OPENVPN_CONFIG_PATH="/etc/openvpn/pia_ca-toronto.conf";
 
 # Make sure that the required configuration file exists
 if [ ! -f "$CONFIG_FILE_PATH" ]; then
@@ -29,8 +36,6 @@ if [ ! -f "$CONFIG_FILE_PATH" ]; then
 fi
 
 # First get the PIA credentials from the pia.config file
-# $PIA_USERNAME
-# $PIA_PASSWORD
 source $CONFIG_FILE_PATH
 
 # Make sure a PIA username and password was pulled from the config file
@@ -38,6 +43,15 @@ if [ ${#PIA_USERNAME} -eq 0 ] || [ ${#PIA_PASSWORD} -eq 0 ]; then
   echo "A PIA Username and Password is needed in the configuration file \"$CONFIG_FILE_PATH\""
   exit 1
 fi
+
+# Get the previous PORT number from the portforward log
+if [ -f "./_forwardPort.log" ]; then
+  read -r CURRENT_PORT < "./_forwardPort.log"
+fi
+
+# get the VPN ip address from the OpenVPN config file
+VPN_IP=$(cat ${OPENVPN_CONFIG_PATH} | grep -m 1 remote | awk '{print $2}')
+echo VPN IP: $VPN_IP
 
 # This function allows you to check if the required tools have been installed.
 check_tool() {
@@ -88,6 +102,14 @@ cat > ./_forwardPort.log <<EOL
 $PORT
 EOL
 
+# remove previous UFW rule, if we have a previous port number
+if [[ -n "$CURRENT_PORT" ]]; then
+  sudo ufw delete allow out to ${VPN_IP} port ${CURRENT_PORT} proto tcp
+fi
+
+# Add new UFW rule for new port_forward IP
+sudo ufw allow out to ${VPN_IP} port ${PORT} proto tcp
+
 # Publish the new port number to MQTT
 # - Configuration is done in pia.config
 # - Simply comment out the following line if you are not using MQTT
@@ -108,7 +130,7 @@ curl -sGk --data-urlencode \
  https://${GATEWAY_IP}:19999/bindPort
 
 # Write the time this was last done to a file
-date > _lastbind.log
+date > _lastBindRequest.log
 
 EOL
 
