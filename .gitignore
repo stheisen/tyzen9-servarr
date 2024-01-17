@@ -8,4 +8,4 @@ firewall_allowAllTraffic.sh
 # Ignore dynamically created files
 pia_registerPort.sh
 _forwardPort.log
-_lastbind.log
+_lastBindRequest.log
